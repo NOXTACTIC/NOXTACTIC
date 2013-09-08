@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<logicalClassDesignerModel xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/ModelStore" dslVersion="1.0.0.0" Id="2c15c5b8-5d42-492f-a02f-8cee6acb15f4" name="UMLClassDiagram1" linkedPackageId="31534b2a-4dbf-494c-bff7-a50c4c59b142" xmlns="http://schemas.microsoft.com/dsltools/LogicalClassDesigner">
+  <profileInstances>
+    <packageHasProfileInstances Id="d6ab7619-95f2-440f-81fe-40fdf043c954">
+      <profileInstance Id="593906e8-2e6d-4416-8abd-aa27c388222e" name="StandardProfileL2">
+        <elementDefinition Id="e34d544e-0fea-4ed6-ac5e-1b74119ac791" />
+      </profileInstance>
+      <elementDefinition Id="0caec977-1f8c-4ba3-a7db-8cc9ad9cc73b" />
+    </packageHasProfileInstances>
+    <packageHasProfileInstances Id="91a09a8e-ea0d-4fad-9e71-65bae9f28d1a">
+      <profileInstance Id="7c596f27-6261-4f95-a068-60693cbf9eb4" name="StandardProfileL3">
+        <elementDefinition Id="532ea607-fb19-44b8-8502-3351b05452be" />
+      </profileInstance>
+      <elementDefinition Id="29349502-908c-4fda-9054-c48619c59ed0" />
+    </packageHasProfileInstances>
+  </profileInstances>
+  <packagedElements>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="ea225411-7a23-48de-936d-c1e77d7200b4" name="Entity" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="6bcaca73-d6e6-4337-a445-d3659238fc18" />
+        <generalsInternal>
+          <generalization Id="240a20b4-1880-4436-b8c1-80118ea06ff2" isSubstitutable="false">
+            <classMoniker Id="2dba58be-7f31-4513-949d-4379dcd9a788" LastKnownName="Unit" />
+            <elementDefinition Id="b7f88803-4f5a-40ce-be6c-a799cab43394" />
+          </generalization>
+        </generalsInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="2dba58be-7f31-4513-949d-4379dcd9a788" name="Unit" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="94ee5400-0843-4d31-a17d-3185c185270e" />
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="cc791b0d-0e80-4b42-8796-994b9b6fa6b2" name="Sound" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="0a6fc099-83d8-4330-bba9-a017a548d82d" />
+        <ownedOperationsInternal>
+          <operation Id="4c9cd38d-ed4d-4d12-b333-4bdc002e6086" name="Playsound" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="9c55ebe1-1c19-4271-83f5-e778e4462859" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="b03775cc-5750-40bc-a623-9278265647b6" name="volume" direction="In" isUnique="false">
+                  <elementDefinition Id="6a7ad5d3-43a0-48b2-a312-2310ac3699e2" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+        </ownedOperationsInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+  </packagedElements>
+  <package Id="31534b2a-4dbf-494c-bff7-a50c4c59b142" name="ModelingProject1">
+    <elementDefinition Id="f0d483da-d756-4f23-b43c-0a6e111aaf54" />
+  </package>
+</logicalClassDesignerModel>

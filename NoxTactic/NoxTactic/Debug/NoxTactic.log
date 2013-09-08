@@ -1,0 +1,32 @@
+﻿Построение начато 30.06.2013 2:21:24.
+     1>Проект "C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\NoxTactic\NoxTactic.vcxproj" в узле 2 (целевые объекты build).
+     1>InitializeBuildStatus:
+         Создание "Debug\NoxTactic.unsuccessfulbuild", так как было задано "AlwaysCreate".
+       GenerateTargetFrameworkMonikerAttribute:
+       Целевой объект "GenerateTargetFrameworkMonikerAttribute" пропускается, так как все выходные файлы актуальны по отношению к входным.
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"C:\Program Files\Microsoft DirectX SDK (June 2010)\\Include" /AI"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /ZI /nologo /W3 /WX /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /EHa /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /TP /analyze- /errorReport:prompt Core.cpp Graphics.cpp /clr:nostdlib 
+         Core.cpp
+         Graphics.cpp
+         Создание кода...
+         Для всех выходных данных обновления не требуется.
+       Link:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\Debug\NoxTactic.exe" /INCREMENTAL /NOLOGO /WX d3d9.lib d3dx9.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\NoxTactic.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\Debug\NoxTactic.pdb" /ASSEMBLYDEBUG /TLBID:1 /DYNAMICBASE /FIXED:NO /NXCOMPAT /MACHINE:X86 Debug\Action.obj
+         Debug\Core.obj
+         Debug\Entity.obj
+         Debug\Graphics.obj
+         Debug\Grid.obj
+         Debug\Sound.obj
+         "Debug\.NETFramework,Version=v4.0.AssemblyAttributes.obj"
+         LINK : не найден или не выполнена сборка C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\Debug\NoxTactic.exe при последней инкрементной компоновке; выполняется полная компоновка
+         NoxTactic.vcxproj -> C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\Debug\NoxTactic.exe
+       Manifest:
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\Debug\NoxTactic.exe;#1" /manifest Debug\NoxTactic.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         Файл "Debug\NoxTactic.unsuccessfulbuild" удаляется.
+         Обращение к "Debug\NoxTactic.lastbuildstate".
+     1>Построение проекта "C:\Documents and Settings\Phoenix\Мои документы\Visual Studio 2010\Projects\NoxTactic\NoxTactic\NoxTactic.vcxproj" завершено (целевые объекты build).
+
+Построение успешно завершено.
+
+Затраченное время: 00:00:22.14
