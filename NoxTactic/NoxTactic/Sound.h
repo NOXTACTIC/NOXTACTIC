@@ -1,10 +1,12 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "Constants.h"
 using namespace std;
+using namespace ContainerDefs;
 
 #undef PlaySound
-enum SOUNDS
+enum enumSounds
 {
 	NO_SOUND,
 	SND_FireBlast,
@@ -114,6 +116,5 @@ public:
 };
 
 namespace Loader{
-    typedef vector<Sound> SoundContainer;
     void loadSounds(SoundContainer& container);
 };

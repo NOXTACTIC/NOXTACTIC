@@ -1,41 +1,15 @@
 #pragma once
-#include "Vector.h"
+#include "Geometry.h"
 #include "Constants.h"
 #include <vector>
 #include <string>
 #include <windows.h>
 #include <d3dx9.h>
-void InitializeRenderer(HINSTANCE& hInstance);
+/*void InitializeRenderer(HINSTANCE& hInstance);
 void ShutDownRenderer();
 void render_frame();
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
-struct Picture 
-{
-    vInt coor;
-    int texture;
-    Picture(const vInt& coor, const int texture): coor(coor), texture(texture){}
-    Picture(): coor(0,0), texture(0){}
-};
-struct Label 
-{
-    vInt coor;
-    std::string text;
-    Label(const vInt& coor, const std::string& text): coor(coor), text(text){}
-    Label(): coor(0,0), text(){}
-};
-struct SpellIcon
-{
-    vInt coor;
-    int texture, active_texture;
-    bool is_active;
-    int get_texture() {return (is_active)? active_texture : texture;}
-};
-struct SpellBar
-{
-    Picture bar;
-    vector<SpellIcon> icons;
-};
 class GraphicsInfoHolder
 {
     std::vector<IDirect3DTexture9*> vtext;
@@ -61,4 +35,4 @@ public:
     friend void render_frame();
 };
 
-extern GraphicsInfoHolder *GIH;
+extern GraphicsInfoHolder *GIH;*/

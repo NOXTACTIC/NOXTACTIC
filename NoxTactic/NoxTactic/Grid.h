@@ -3,7 +3,7 @@
 #include <list>
 #include <string>
 #include "Strings.h"
-#include "Vector.h"
+#include "Geometry.h"
 class Entity;
 #include "Entity.h"
 typedef std::list<Entity*> EntContainer;
@@ -76,8 +76,7 @@ public:
 
 namespace Loader
 {
-    typedef std::vector<Tile> TileContainer;
-    typedef std::vector<Wall> WallContainer;
+    using namespace ContainerDefs;
     void loadTiles(TileContainer& container, std::string AppPath, const StringContainer& strings);
     void loadWalls(WallContainer& container, std::string AppPath, const StringContainer& strings);
 };
@@ -107,8 +106,8 @@ class Grid
     {
         list<Entity *> ents;
         bool is_wall;
-        Wall wall;
-        Tile tile;
+        Wall* wall;
+        Tile* tile;
     };
     std::vector<std::vector<Cell>> data;
     int size_x, size_y;
@@ -121,8 +120,8 @@ public:
     void Move(Entity* ent, const vInt& dest, const Direction dir = NO_DIRECTION);
     void Swap(Entity* ent1, Entity* ent2);
     void Add(Entity* ent);
-    void SetWall(const vInt& coor, Wall wall);
-    void SetTile(const vInt& coor, Tile tile);
+    void SetWall(const vInt& coor, Wall* wall);
+    void SetTile(const vInt& coor, Tile* tile);
     void RemoveWall(const vInt& coor);
 
     bool BlocksMoving(const Entity* ent, const vInt& dest, bool UnitJumps = false) const;
@@ -132,6 +131,7 @@ public:
     Entity* operator()(const vInt& coor){ return (*this)(coor.x, coor.y);}
     int sizex(){return size_x;}
     int sizey(){return size_y;}
+    vInt size(){return vInt(size_x, size_y);}
 
     Path TraceRay(vInt start, vInt dest) const;
     Path TraceLine(vInt start, vInt dest) const;

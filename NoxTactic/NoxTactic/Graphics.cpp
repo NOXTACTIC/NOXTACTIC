@@ -1,5 +1,5 @@
-#include "Graphics.h"
-#include "Vector.h"
+/*#include "Graphics.h"
+#include "Geometry.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <windows.h>
@@ -199,7 +199,7 @@ void render_frame()
             for (int z = 0; z != GIH->data[x][y].size(); ++z) {
                 //if (GIH->data[x][y][z] != 0) {
     
-
+                    
                     D3DXMatrixTranslation(&matTranslate, (float)picsizex*x/10, (float)picsizex*y/10, 0.0f);
                     //d3ddev->SetTexture(0, GIH->vtext[GIH->data[x][y][z]]);
                     d3ddev->SetTexture(0, texture);
@@ -212,4 +212,4 @@ void render_frame()
 
     d3ddev->EndScene();    // ends the 3D scene
     d3ddev->Present(NULL, NULL, NULL, NULL);    // displays the created frame
-}
+}*/

@@ -1,42 +1,31 @@
 class Action;
 class Enchant;
 #include "Entity.h"
-#include "Action.h"
 #include "Constants.h"
 #include "Sound.h"
-#include "Vector.h"
+#include "Geometry.h"
+#include "Enchants.h"
 #include <math.h>
 #include <string>
 #pragma warning (disable:4351)
+using namespace ContainerDefs;
+
+
+
 DefaultEntity::DefaultEntity(int hp, int mp, int reghp, int regmp, enumStrings name,
-    Sound& snd_hurt, Sound& snd_die, enumMaterial Material, int flags, 
-    const std::string& AppPath, const Loader::StringContainer& strings, Dmg aura_damage, Dmg aura_radius_damage): 
+    Sound* snd_hurt, Sound* snd_die, enumMaterial Material, int flags, 
+    Dmg aura_damage, Dmg aura_radius_damage): 
     hp(hp),  mp(mp), reghp(reghp), regmp(regmp), name(name), 
     snd_hurt(snd_hurt), snd_die(snd_die), Material(Material), flags(flags),
-    aura_damage(aura_damage), aura_radius_damage(aura_radius_damage), textures(){
-        if (name != NO_STRING) {
-            if (Flag(ENT_IS_OMNIDIRECTIONAL)) {
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + common_extension));
-            } else {
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(1) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(2) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(3) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(4) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(5) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(6) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(7) + common_extension));
-                textures.push_back(GIH->AddTexture(AppPath + Paths::EntitiesPictures + strings[name] + int_to_string(8) + common_extension));
-            }
-        }
-    }
+    aura_damage(aura_damage), aura_radius_damage(aura_radius_damage), textures(){}
 DefaultUnit::DefaultUnit(DefaultEntity defent,
         int fireresist, int shockresist, int armor, int speed, int charmsize,
-        vector<Action *>& actions_, Weapon& weapon, int ammo):
+        vector<Action *>& actions_, Weapon* weapon, int ammo):
         DefaultEntity(defent),
         resist_fire(fireresist), resist_shock(shockresist), armor(armor), speed(speed),
         charm_size(charmsize), Actions(actions_), weapon(weapon), ammo(ammo) {}
-DefaultProjectile::DefaultProjectile(DefaultEntity defent):
-        DefaultEntity(defent) {}
+DefaultProjectile::DefaultProjectile(DefaultEntity defent, int speed, void (*Collidefunc)(Entity*, Entity*)):
+        DefaultEntity(defent), speed(speed), Collide(Collidefunc) {}
 
 Weapon::Weapon(Action* action, BLOCK_QUALITY blocktype, int manacost, vector<WeaponEnchant> chants): 
         action(action), block_quality(blocktype), mana_per_ammo(manacost) {
@@ -51,33 +40,34 @@ Entity::Entity(DefaultEntity& prototype, const vInt& coor, int team, Direction d
 Unit::Unit(DefaultUnit& prototype, vInt& coor, int team, Direction dir):
     Entity(static_cast<DefaultEntity&>(prototype), coor, team, dir),
     enchants(), cooldowns(), movepoints(prototype.speed), ammo(prototype.ammo),
-    ammo_manabuffer(0), is_in_blocking_state(true), can_act(2), lspell(), cspell(){}
-
+    ammo_manabuffer(0), is_in_blocking_state(true), can_act(2), long_action(), cspell(){}
+CommonProjectile::CommonProjectile(DefaultProjectile& prototype, vInt& coor, int team, Entity* source, ::Angle angle):
+    Projectile(Entity(static_cast<DefaultEntity&>(prototype), coor, team, angle.ToDirection())),
+    speed(prototype.speed), angle(angle){}
+Projectile::Projectile(Entity entity): Entity(entity) {}
 
 void Loader::loadWeapons(WeaponContainer& container, ActionContainer& actions){
     container.reserve(Counters::weapons);
-    container.push_back(Weapon(actions[ACTION_FIRE_STAFF], BLOCK_STAFF, 3));
-    container.push_back(Weapon(actions[ACTION_FORCE_STAFF], BLOCK_STAFF, 1));
-    container.push_back(Weapon(actions[ACTION_FON_STAFF], BLOCK_STAFF, 20));
-    container.push_back(Weapon(actions[ACTION_LONGSWORD], BLOCK_LONGSWORD, 0));
-    container.push_back(Weapon(actions[ACTION_HAMMER], NO_BLOCK, 0));
-    container.push_back(Weapon(actions[ACTION_SHURIKEN], BLOCK_SHIELD, 0));
-    container.push_back(Weapon(actions[NO_ACTION], NO_BLOCK, 0)); //chakram
-    container.push_back(Weapon(actions[ACTION_MACE], BLOCK_SHIELD, 0));
-    container.push_back(Weapon(actions[ACTION_FIRESWORD], BLOCK_SHIELD, 0));
-    container.push_back(Weapon(actions[ACTION_HELLFIRE_STAFF], BLOCK_STAFF, 6));
-    container.push_back(Weapon(actions[ACTION_BOW], NO_BLOCK, 0));
+    container.push_back(new Weapon(actions[ACTION_FIRE_STAFF], BLOCK_STAFF, 3));
+    container.push_back(new Weapon(actions[ACTION_FORCE_STAFF], BLOCK_STAFF, 1));
+    container.push_back(new Weapon(actions[ACTION_FON_STAFF], BLOCK_STAFF, 20));
+    container.push_back(new Weapon(actions[ACTION_LONGSWORD], BLOCK_LONGSWORD, 0));
+    container.push_back(new Weapon(actions[ACTION_HAMMER], NO_BLOCK, 0));
+    container.push_back(new Weapon(actions[ACTION_SHURIKEN], BLOCK_SHIELD, 0));
+    container.push_back(new Weapon(actions[NO_ACTION], NO_BLOCK, 0)); //chakram
+    container.push_back(new Weapon(actions[ACTION_MACE], BLOCK_SHIELD, 0));
+    container.push_back(new Weapon(actions[ACTION_FIRESWORD], BLOCK_SHIELD, 0));
+    container.push_back(new Weapon(actions[ACTION_HELLFIRE_STAFF], BLOCK_STAFF, 6));
+    container.push_back(new Weapon(actions[ACTION_BOW], NO_BLOCK, 0));
 }
 
 void Loader::loadDefaultEntities(EntityContainer& container, ActionContainer& actions, 
-                                 SoundContainer& sounds, WeaponContainer& weapons, 
-                                 std::string AppPath, const StringContainer& strings){
+                                 SoundContainer& sounds, WeaponContainer& weapons){
     ActionContainer tmp;
     tmp.assign(actions_per_set * actionsets_count, actions[NO_ACTION]);
-
     container.reserve(Counters::entities);
     container.push_back(new DefaultEntity(0, 0, 0, 0, NO_STRING, 
-        sounds[NO_SOUND], sounds[NO_SOUND], NO_MATERIAL, 0, AppPath, strings));
+        sounds[NO_SOUND], sounds[NO_SOUND], NO_MATERIAL, 0));
     //WIZARD YELLOW
     tmp[0] = actions[ACTION_HASTE];
     tmp[1] = actions[ACTION_PROTECTION_FIRE];
@@ -111,7 +101,7 @@ void Loader::loadDefaultEntities(EntityContainer& container, ActionContainer& ac
 
     container.push_back(new DefaultUnit(DefaultEntity(75, 150, 1, 2, STR_ENT_WIZ_YELLOW,
         sounds[NO_SOUND], sounds[NO_SOUND], MATERIAL_FLESH, 
-        ENT_IS_UNIT + ENT_IS_SOLID + ENT_IS_TALL + ENT_IS_VISIBLE, AppPath, strings), 
+        ENT_IS_UNIT + ENT_IS_SOLID + ENT_IS_TALL + ENT_IS_VISIBLE), 
         0, 0, 10, 2, 0, tmp, weapons[WEAP_FIRESTAFF], 20));
     //WIZARD BLUE
 //     tmp[0] = actions[ACTION_]; the same as before
@@ -145,7 +135,7 @@ void Loader::loadDefaultEntities(EntityContainer& container, ActionContainer& ac
 //     tmp[24] = actions[ACTION_];
     container.push_back(new DefaultUnit(DefaultEntity(75, 150, 1, 1, STR_ENT_WIZ_BLUE,
         sounds[NO_SOUND], sounds[NO_SOUND], MATERIAL_FLESH, 
-        ENT_IS_UNIT + ENT_IS_SOLID + ENT_IS_TALL + ENT_IS_VISIBLE, AppPath, strings), 
+        ENT_IS_UNIT + ENT_IS_SOLID + ENT_IS_TALL + ENT_IS_VISIBLE), 
         0, 20, 10, 2, 0, tmp, weapons[WEAP_FORCESTAFF], 60));
 
     //WIZARD RED
@@ -180,7 +170,7 @@ void Loader::loadDefaultEntities(EntityContainer& container, ActionContainer& ac
     tmp[24] = actions[ACTION_COUNTERSPELL];
     container.push_back(new DefaultUnit(DefaultEntity(75, 150, 1, 1, STR_ENT_WIZ_RED,
         sounds[NO_SOUND], sounds[NO_SOUND], MATERIAL_FLESH, 
-        ENT_IS_UNIT + ENT_IS_SOLID + ENT_IS_TALL + ENT_IS_VISIBLE, AppPath, strings), 
+        ENT_IS_UNIT + ENT_IS_SOLID + ENT_IS_TALL + ENT_IS_VISIBLE), 
         20, 0, 10, 2, 0, tmp, weapons[WEAP_TRIPLEFIRE], 10));
 
 
@@ -353,65 +343,63 @@ void Loader::loadDefaultEntities(EntityContainer& container, ActionContainer& ac
 //         STR_ENT_DOOR_WOODEN,
 //         STR_ENT_DOOR_JAIL,
 }
-bool Entity::CheckForValidity(const vInt& dest, const Entity* target, const Action* action, bool IsVisible) const { return false; }
-bool Entity::PerformAction(const vInt& dest, const Entity* target, const int action_id, bool IsVisible) {return false;}
-bool Unit::CheckForValidity(const vInt& dest, const Entity* target, const Action* action, bool IsVisible) const {
+bool Entity::CheckForValidity(const vInt& dest, const Entity* target, ActionFlags flags, 
+    bool IsVisible, int manacost, int range, int cd_index, bool is_lengthy) const { return false; }
+//bool Entity::PerformAction(const vInt& dest, const Entity* target, ActionFlags flags, bool IsVisible) {return false;}
+bool Unit::CheckForValidity(const vInt& dest, const Entity* target, ActionFlags flags, 
+    bool IsVisible, int manacost, int range, int cd_index, bool is_lengthy) const {
     const DefaultUnit& me = GetPrototype();
-    bool is_lengthy = action->IsLengthy();
 
-    if (action->Flag(AFLAG_IS_SPELL) && IsEnchanted(ENCHANT_NULL)) {
+    if (flags & AFLAG_IS_SPELL && IsEnchanted(ENCHANT_NULL)) {
         return false;
     }
-    if (action->Flag(AFLAG_IS_ABILITY) && 
-        cooldowns[dynamic_cast<const Ability*>(action)->cooldown_index()] > 0) {
+    if (flags & AFLAG_IS_ABILITY && 
+        cooldowns[cd_index] > 0) {
             return false;
     }
 
-    if (action->Flag(AFLAG_IS_QUICK)) {
+    if (flags & AFLAG_IS_QUICK) {
         if (!can_act) { return false; }
     } else {
         if (can_act < 2) {return false; }
     }
 
-    if (!is_lengthy && action->Flag(AFLAG_CANT_TARGET_SELF)) {
+    if (!is_lengthy && (flags & AFLAG_CANT_TARGET_SELF)) {
         if (coor == dest) { return false; } //DONT TARGET YOURSELF >(
     }
-    if (!is_lengthy && action->Flag(AFLAG_MUST_TARGET_EMPTY)) {
+    if (!is_lengthy && (flags & AFLAG_MUST_TARGET_EMPTY)) {
         if (!target) { return false; }
     }
-    if (!is_lengthy && action->Flag(AFLAG_MUST_TARGET_UNIT)) {
+    if (!is_lengthy && (flags & AFLAG_MUST_TARGET_UNIT)) {
         if (!target || !target->Flag(ENT_IS_UNIT)) { return false; }
     }
-    if (action->Flag(AFLAG_CANT_BE_ANCHORED)) {
+    if (flags & AFLAG_CANT_BE_ANCHORED) {
         if (enchants[ENCHANT_ANCHOR]) { return false; }
     }
-    if (action->Flag(AFLAG_NEED_AMMO)) {
+    if (flags & AFLAG_NEED_AMMO) {
         if (!ammo) { return false; }
     }
-    if (action->Flag(AFLAG_MUST_TURN_TO_TARGET) || action->Flag(AFLAG_IS_MELEE)) {    //melee always requires turning
+    if (flags & (AFLAG_MUST_TURN_TO_TARGET | AFLAG_IS_MELEE)) {    //melee always requires turning
         if (coor.DefineDirection(dest) != dir && !movepoints) { return false; } //directions not match and no points left to turn
     }
-    if (action->Flag(AFLAG_IS_MELEE)) {
+    if (flags & AFLAG_IS_MELEE) {
         if ((coor-dest).intlength(true) != 1) { return false; } //too far away
     }
-    if (action->Flag(AFLAG_IS_TARGETLESS)) {
+    if (flags & AFLAG_IS_TARGETLESS) {
         if (coor != dest) { return false; }
     }
-    if (!is_lengthy && action->Flag(AFLAG_RANGE_LIMITED)) {
-        if ((coor-dest).intlength(true) > action->Range()) { return false; }
+    if (!is_lengthy && (flags & AFLAG_RANGE_LIMITED)) {
+        if ((coor-dest).intlength(true) > range) { return false; }
     }
-    if (action->Flag(AFLAG_IS_SPELL)) {
-        if (mp < dynamic_cast<const Spell*>(action)->Cost()) { return false; }
+    if (flags & AFLAG_IS_SPELL) {
+        if (mp < manacost) { return false; }
     }
-    if (action->Flag(AFLAG_IS_ABILITY)) {
-        if (!cooldowns[ dynamic_cast<const Ability*>(action)->cooldown_index() ]) { return false; }
-    }
-    if (!is_lengthy && action->Flag(AFLAG_MUST_TARGET_VISIBLE)) {
+    if (!is_lengthy && (flags & AFLAG_MUST_TARGET_VISIBLE)) {
         if (!IsVisible) { return false; }
     }
     return true;
 }
-bool Unit::PerformAction(const vInt& dest, const Entity* target, const int action_id, bool IsVisible) {
+/*bool Unit::PerformAction(const vInt& dest, const Entity* target, ActionFlags flags, bool IsVisible) {
     const DefaultUnit& me = GetPrototype();
     if(me.Actions.size() <= (unsigned int)action_id) { return false; } //wrong action
     const Action* action = me.Actions[action_id];
@@ -420,7 +408,7 @@ bool Unit::PerformAction(const vInt& dest, const Entity* target, const int actio
     if (CheckForValidity(dest, target, GetPrototype().Actions[action_id], IsVisible)) {
         ApplyPenalties(dest, action);
         if (is_lengthy) {
-            lspell = LSpell(action->TimeToPerform(), vInt(dest), action);
+            long_action = long_action(action->TimeToPerform(), vInt(dest), action);
             return true;
         } else {
             return action->Perform(this, dest);
@@ -429,27 +417,25 @@ bool Unit::PerformAction(const vInt& dest, const Entity* target, const int actio
         return false;
     }
 }
-
-void Entity::ApplyPenalties(const vInt& dest, const Action* action) {
-}
-void Unit::ApplyPenalties(const vInt& dest, const Action* action) {
-    if (action->Flag(AFLAG_IS_QUICK)) {
+*/
+void Entity::ApplyPenalties(const vInt& dest, ActionFlags flags, int manacost, int cd_index, int cd_value) {}
+void Unit::ApplyPenalties(const vInt& dest, ActionFlags flags, int manacost, int cd_index, int cd_value) {
+    if (flags & AFLAG_IS_QUICK) {
         can_act--;
     } else {
         can_act -= 2;
     }
-    if (action->Flag(AFLAG_NEED_AMMO)) {
+    if (flags & AFLAG_NEED_AMMO) {
         ammo--;
     }
-    if (action->Flag(AFLAG_MUST_TURN_TO_TARGET) || action->Flag(AFLAG_IS_MELEE)) {
+    if (flags & (AFLAG_MUST_TURN_TO_TARGET | AFLAG_IS_MELEE)) {
         if (coor.DefineDirection(dest) != dir) { movepoints--;}
     }
-    if (action->Flag(AFLAG_IS_SPELL)) {
-        mp -= dynamic_cast<const Spell*>(action)->Cost();
+    if (flags & AFLAG_IS_SPELL) {
+        mp -= manacost;
     }
-    if (action->Flag(AFLAG_IS_ABILITY)) {
-        cooldowns[ dynamic_cast<const Ability*>(action)->cooldown_index() ] = 
-            dynamic_cast<const Ability*>(action)->cooldown_value();
+    if (flags & AFLAG_IS_ABILITY) {
+        cooldowns[cd_index] = cd_value;
     }
     BlockingState() = false;
 }
@@ -523,7 +509,7 @@ void Unit::StartTurn(){
     }
 }
 void Unit::EndTurn(){
-    switch (GetPrototype().weapon.block_quality) {
+    switch (GetPrototype().weapon->block_quality) {
     case BLOCK_STAFF:
     case BLOCK_LONGSWORD:
     case BLOCK_QUICKSHIELD:
@@ -554,7 +540,7 @@ void Unit::DrainMana(Entity *source) {
     mp += mana;
     source->mp -= mana;
 
-    int mana_per_ammo = GetPrototype().weapon.mana_per_ammo;
+    int mana_per_ammo = GetPrototype().weapon->mana_per_ammo;
     if (source->mp != 0 &&
         mana_per_ammo != 0 && 
         GetPrototype().ammo != ammo) {
