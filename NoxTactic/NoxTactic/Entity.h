@@ -11,9 +11,9 @@ class Enchant;
 struct Dmg
 {
     DAMAGE type;
-    DAMAGE_FLAGS flags;
+    long flags;
     int value;
-    Dmg(DAMAGE type, int value, DAMAGE_FLAGS flags): type(type), flags(flags), value(value) {}
+    Dmg(DAMAGE type, int value, long flags): type(type), flags(flags), value(value) {}
     Dmg(): type(DMG_FIRE), flags(DFLAG_NOFLAGS), value(0) {}
 };
 enum DefEntFlags
@@ -73,12 +73,12 @@ protected:
     Sound* snd_hurt;
     Sound* snd_die;
     enumMaterial Material;
-    int flags;
+    long flags;
     Dmg aura_damage, aura_radius_damage;
     std::vector<int> textures;
 public:
     DefaultEntity(int hp, int mp, int reghp, int regmp, enumStrings name,
-        Sound* snd_hurt, Sound* snd_die, enumMaterial Material, int flags,
+        Sound* snd_hurt, Sound* snd_die, enumMaterial Material, long flags,
         Dmg aura_damage = Dmg(), Dmg aura_radius_damage = Dmg());
     bool Flag(DefEntFlags flag) const { return ((flags & flag) > 0); }
     enumStrings Name() const { return name; }
@@ -90,7 +90,7 @@ class Entity
 {
 protected:
     int hp, mp;
-    int flags;
+    long flags;
     vInt coor;
     Direction dir;
     DefaultEntity& prototype;
@@ -100,7 +100,7 @@ protected:
     bool is_dead;
 
     virtual const DefaultEntity& GetPrototype() const {return prototype;}
-    virtual void ApplyPenalties(const vInt& dest, ActionFlags flags, int manacost, int cd_index, int cd_value);
+    virtual void ApplyPenalties(const vInt& dest, long flags, int manacost, int cd_index, int cd_value);
 public:
     virtual ~Entity(){}
     Entity(DefaultEntity& prototype, const vInt& coor, int team, Direction dir = NO_DIRECTION);
@@ -110,9 +110,9 @@ public:
     virtual void StopCSpells(){}
     virtual void StartTurn();
     virtual void EndTurn();
-    virtual bool CheckForValidity(const vInt& dest, const Entity* target, ActionFlags flags, 
+    virtual bool CheckForValidity(const vInt& dest, const Entity* target, long flags, 
         bool IsVisible, int manacost, int range, int cd_index, bool is_lengthy) const;
-    //virtual bool PerformAction(const vInt& dest, const Entity* target, ActionFlags flags, bool IsVisible); 
+    //virtual bool PerformAction(const vInt& dest, const Entity* target, long flags, bool IsVisible); 
     bool Flag(DefEntFlags flag) const { return prototype.Flag(flag); }
     vInt Coor() const { return coor; }
     Direction Dir() const { return dir; }
@@ -180,7 +180,7 @@ protected:
         }
     } cspell[Counters::continuous_spells];
 
-    virtual void ApplyPenalties(const vInt& dest, ActionFlags flags, int manacost, int cd_index, int cd_value);
+    virtual void ApplyPenalties(const vInt& dest, long flags, int manacost, int cd_index, int cd_value);
     int FireResist(){return min(GetPrototype().resist_fire + (IsEnchanted(ENCHANT_PROTECTION_FIRE))? 50 : 0 , 100); }
     int ShockResist(){return min(GetPrototype().resist_shock + (IsEnchanted(ENCHANT_PROTECTION_SHOCK))? 50 : 0 , 100); }
     int VenomResist(){return min((IsEnchanted(ENCHANT_PROTECTION_FIRE))? 50 : 0 , 100); }
@@ -189,9 +189,9 @@ protected:
 public:
     virtual ~Unit(){}
     Unit(DefaultUnit& prototype, vInt& coor, int team, Direction dir = NO_DIRECTION);
-    virtual bool CheckForValidity(const vInt& dest, const Entity* target, ActionFlags flags, 
+    virtual bool CheckForValidity(const vInt& dest, const Entity* target, long flags, 
         bool IsVisible, int manacost, int range, int cd_index, bool is_lengthy) const;
-    //virtual bool PerformAction(const vInt& dest, const Entity* target, ActionFlags flags, bool IsVisible); 
+    //virtual bool PerformAction(const vInt& dest, const Entity* target, long flags, bool IsVisible); 
     virtual void GetDamage(Dmg damage);
     virtual void CastEnchant(const Enchant& enchant);
     int Speed() {

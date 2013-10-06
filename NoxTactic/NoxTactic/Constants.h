@@ -18,7 +18,7 @@ namespace Counters
     const int continuous_spells = 8;
     const int directions = 8;
 };
-const string common_extension = ".png";
+const string common_extension = ".jpg";
 namespace Paths 
 {
     const string MoveArrow = "\\data\\pictures\\common\\Arrow";

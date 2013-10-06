@@ -49,6 +49,7 @@ template<class T> struct Vector
 	//Vector(const Vector &a); //generated automatically
 	Vector operator+(const Vector<T> &a) const { return Vector<T>(x+a.x, y+a.y);}
 	Vector operator*(const Vector<T> &a) const { return Vector<T>(x*a.x, y*a.y);}
+	Vector operator/(const Vector<T> &a) const { return Vector<T>(x/a.x, y/a.y);}
     Vector operator-(const Vector<T> &a) const { return Vector<T>(x-a.x, y-a.y);}
     Vector& operator+=(const Vector<T> &a) { x+=a.x; y+=a.y; return *this;}
     Vector& operator*=(const Vector<T> &a) { x*=a.x; y*=a.y; return *this;}
@@ -146,21 +147,22 @@ template<class T> struct Vector
 
 
 
-template<class T> Vector<T> operator*(const int x, const Vector<T>& v) {
+template<class T> Vector<T> operator*(const T x, const Vector<T>& v) {
 	return Vector<T>(v.x * x, v.y * x);
 }
-template<class T> Vector<T> operator*(const Vector<T> &v, const int x) {
+template<class T> Vector<T> operator*(const Vector<T> &v, const T x) {
 	return Vector<T>(v.x * x, v.y * x);
 }
-template<class T> Vector<T> operator/(const int x, const Vector<T>& v) {
+template<class T> Vector<T> operator/(const T x, const Vector<T>& v) {
 	return Vector<T>(v.x / x, v.y / x);
 }
-template<class T> Vector<T> operator/(const Vector<T> &v, const int x) {
+template<class T> Vector<T> operator/(const Vector<T> &v, const T x) {
 	return Vector<T>(v.x / x, v.y / x);
 }
 #define PI 3.14159265
 typedef Vector<int> vInt;
 typedef Vector<double> vDbl;
+typedef Vector<long> vLng;
 
 
 enum ReflectType

@@ -13,7 +13,7 @@ using namespace ContainerDefs;
 
 
 DefaultEntity::DefaultEntity(int hp, int mp, int reghp, int regmp, enumStrings name,
-    Sound* snd_hurt, Sound* snd_die, enumMaterial Material, int flags, 
+    Sound* snd_hurt, Sound* snd_die, enumMaterial Material, long flags, 
     Dmg aura_damage, Dmg aura_radius_damage): 
     hp(hp),  mp(mp), reghp(reghp), regmp(regmp), name(name), 
     snd_hurt(snd_hurt), snd_die(snd_die), Material(Material), flags(flags),
@@ -343,10 +343,10 @@ void Loader::loadDefaultEntities(EntityContainer& container, ActionContainer& ac
 //         STR_ENT_DOOR_WOODEN,
 //         STR_ENT_DOOR_JAIL,
 }
-bool Entity::CheckForValidity(const vInt& dest, const Entity* target, ActionFlags flags, 
+bool Entity::CheckForValidity(const vInt& dest, const Entity* target, long flags, 
     bool IsVisible, int manacost, int range, int cd_index, bool is_lengthy) const { return false; }
-//bool Entity::PerformAction(const vInt& dest, const Entity* target, ActionFlags flags, bool IsVisible) {return false;}
-bool Unit::CheckForValidity(const vInt& dest, const Entity* target, ActionFlags flags, 
+//bool Entity::PerformAction(const vInt& dest, const Entity* target, long flags, bool IsVisible) {return false;}
+bool Unit::CheckForValidity(const vInt& dest, const Entity* target, long flags, 
     bool IsVisible, int manacost, int range, int cd_index, bool is_lengthy) const {
     const DefaultUnit& me = GetPrototype();
 
@@ -399,7 +399,7 @@ bool Unit::CheckForValidity(const vInt& dest, const Entity* target, ActionFlags 
     }
     return true;
 }
-/*bool Unit::PerformAction(const vInt& dest, const Entity* target, ActionFlags flags, bool IsVisible) {
+/*bool Unit::PerformAction(const vInt& dest, const Entity* target, long flags, bool IsVisible) {
     const DefaultUnit& me = GetPrototype();
     if(me.Actions.size() <= (unsigned int)action_id) { return false; } //wrong action
     const Action* action = me.Actions[action_id];
@@ -418,8 +418,8 @@ bool Unit::CheckForValidity(const vInt& dest, const Entity* target, ActionFlags 
     }
 }
 */
-void Entity::ApplyPenalties(const vInt& dest, ActionFlags flags, int manacost, int cd_index, int cd_value) {}
-void Unit::ApplyPenalties(const vInt& dest, ActionFlags flags, int manacost, int cd_index, int cd_value) {
+void Entity::ApplyPenalties(const vInt& dest, long flags, int manacost, int cd_index, int cd_value) {}
+void Unit::ApplyPenalties(const vInt& dest, long flags, int manacost, int cd_index, int cd_value) {
     if (flags & AFLAG_IS_QUICK) {
         can_act--;
     } else {

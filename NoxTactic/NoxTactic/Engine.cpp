@@ -7,10 +7,18 @@
 #include <list>
 #include <vector>
 
+#pragma comment (lib, "d3d9")
+#pragma comment (lib, "d3dx9")
+#pragma comment (lib, "dxguid")
+#pragma comment (lib, "dinput8")
 EngineCore* core;
 LRESULT WINAPI MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == WM_CLOSE) {
+        DestroyWindow(hWnd);
+        PostQuitMessage(0);
+    }
     if (!core) {
-        return 0;
+        return DefWindowProc(hWnd, uMsg, wParam, lParam);
     } else {
         return core->MsgProc(hWnd, uMsg, wParam, lParam);
     }
@@ -26,15 +34,29 @@ void EngineCore::SetMouseVisibility(bool val) {}
 EngineCore::EngineCore(HINSTANCE& hInstance, const std::string& classname, const std::string& caption,
     long window_width, long window_height, long startposx, long startposy):
     inst(hInstance), classname(classname), caption(caption), width(window_width), height(window_height),
-    pos_x(startposx), pos_y(startposy)
+    pos_x(startposx), pos_y(startposy), wnd(0)
 {
-    WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_VREDRAW|CS_HREDRAW|CS_OWNDC, 
-        ::MsgProc, 0, 0, hInstance, NULL, NULL, (HBRUSH)(COLOR_WINDOW+1), 
-        NULL, classname.data(), NULL};
+    WNDCLASSEX wc;
+	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wc.lpszClassName = classname.c_str();
+    wc.lpszMenuName = NULL;
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = ::MsgProc;
+    wc.hInstance = hInstance;
+    wc.hIcon = NULL;
+    wc.hIconSm = NULL;
+    wc.hCursor = NULL;
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+
+    SetLastError(0);
     RegisterClassEx(&wc);
-    HWND hWnd = CreateWindowEx(0, classname.data(), caption.data(),
-        WS_EX_TOPMOST , 100, 100, width, height,
+    DWORD t = GetLastError();
+    wnd = CreateWindowEx(0, classname.c_str(), caption.c_str(),
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, width, height,
         NULL, NULL, hInstance, NULL);
+
     {
     //code taken from 
     //http://stackoverflow.com/questions/2647429/c-windows-path-to-the-folder-where-the-executable-is-located
@@ -47,11 +69,17 @@ EngineCore::EngineCore(HINSTANCE& hInstance, const std::string& classname, const
         ApplicationExeName = std::string(ApplicationPath.begin() + dotpos, ApplicationPath.end());
         ApplicationPath.erase(ApplicationPath.begin() + dotpos, ApplicationPath.end());
     }
+    
+    ShowWindow(wnd, SW_SHOW);
+    UpdateWindow(wnd);
 }
-EngineCore::~EngineCore() {}
+EngineCore::~EngineCore() {
+    UnregisterClass(classname.c_str(), inst);
+}
 
 GraphicCore::GraphicCore(EngineCore* engine): wnd(engine->GetWnd()), 
-    width(engine->WindowHeight()), height(engine->WindowHeight()), iszbuffer(false) {} 
+    width(engine->WindowWidth()), height(engine->WindowHeight()), iszbuffer(false),
+    d3d(nullptr), device(nullptr), sprite(nullptr){} 
 GraphicCore::~GraphicCore() {}
 
 // COM-interface getters
@@ -68,13 +96,19 @@ void GraphicCore::Init(){
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;    // discard old frames
     d3dpp.hDeviceWindow = wnd;          // set the window to be used by Direct3D
     d3dpp.BackBufferFormat = D3DFMT_A8R8G8B8;    // set the back buffer format to 32-bit
+    d3dpp.BackBufferCount = 1;
     d3dpp.BackBufferWidth = width;      // set the width of the buffer
     d3dpp.BackBufferHeight = height;    // set the height of the buffer
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+    d3dpp.MultiSampleQuality			= 0;
+    d3dpp.MultiSampleType				= D3DMULTISAMPLE_NONE;
+    d3dpp.PresentationInterval			= D3DPRESENT_INTERVAL_IMMEDIATE;
 
     d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd,
                       D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
+
+
 
     device->SetRenderState(D3DRS_LIGHTING, FALSE); 
     device->SetRenderState(D3DRS_ZENABLE, FALSE);
@@ -92,8 +126,8 @@ void GraphicCore::Init(){
 
     D3DXCreateSprite(device, &sprite);
 
-    ShowWindow(wnd, SW_SHOW);
-    UpdateWindow(wnd);
+    //ShowWindow(wnd, SW_SHOW); //moved to enginecore(init)
+    //UpdateWindow(wnd);
 }     
 void GraphicCore::Shutdown(){
     for (auto it = textures.begin(); it != textures.end(); ++it) {
@@ -120,17 +154,22 @@ void GraphicCore::EndScene(){
 }  
 
 void GraphicCore::BeginSprite(){
-    sprite->Begin(0);
-} 
-void GraphicCore::PaintSprite(int TextureID, const D3DXVECTOR2& coor, const D3DXVECTOR2& scaling) {
-    sprite->Draw(textures[TextureID].texture, NULL, &D3DXVECTOR3(coor.x, coor.y, 0),
-                    &D3DXVECTOR3(coor.x, coor.y, 0), NULL);
+    device->BeginScene();
+    sprite->Begin(D3DXSPRITE_ALPHABLEND);
+}
+void GraphicCore::PaintSprite(int TextureID, const D3DXVECTOR2& coor) {
+    sprite->Draw(textures[TextureID+1].texture, NULL, NULL,
+                    &D3DXVECTOR3(coor.x, coor.y, 0), 0xffffffff);
 }
 void GraphicCore::EndSprite(){
     sprite->End();
+    device->EndScene();
+    device->Present(NULL,NULL,NULL,NULL);
 } 
 
-void GraphicCore::ClearDisplay(long Color){}
+void GraphicCore::ClearDisplay(long Color){
+    device->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, Color, 1.0f, 0 );
+}
 void GraphicCore::ClearZBuffer(float ZBuffer){}
 void GraphicCore::Clear(long Color, float ZBuffer){}
 
@@ -183,12 +222,12 @@ Color& GraphicCore::AmbientLight(){
 int GraphicCore::AddTexture_A(const std::string& AbsolutePath, const Color& transparent){
     Texture tmptext(device, AbsolutePath, transparent);
     textures.push_back(tmptext);
-    return textures.size() - 1;
+    return textures.size();
 }
 int GraphicCore::AddTexture_A(const std::string& AbsolutePath){
     Texture tmptext(device, AbsolutePath);
     textures.push_back(tmptext);
-    return textures.size() - 1;
+    return textures.size();
 }
 
 //terminating with '/' is required
@@ -208,6 +247,42 @@ Texture::Texture(IDirect3DDevice9 *device, const std::string& Path, Color transp
         D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, transparent, 0, 0, &texture);
 }
 Texture::Texture(IDirect3DDevice9 *device, const std::string& Path) { 
-    D3DXCreateTextureFromFileEx(device, Path.data(), 0, 0, 0, 0, D3DFMT_UNKNOWN, 
+    HRESULT hr = D3DXCreateTextureFromFileEx(device, Path.data(), 0, 0, 0, 0, D3DFMT_DXT1, 
         D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, 0, 0, &texture);
+    if FAILED(hr) {
+        throw("wrong texture: " + Path);
+    }
+}
+
+IDirectInput8* InputCore::GetDevice() {
+    return device;
+}
+HWND InputCore::GetWnd() const {
+    return wnd;
+}
+void InputCore::Init(HWND hWnd, HINSTANCE hInst) {
+    DirectInput8Create(hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&device, NULL);
+    device->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
+    device->CreateDevice(GUID_SysMouse, &mouse, NULL);
+    keyboard->SetDataFormat(&c_dfDIKeyboard);
+    mouse->SetDataFormat(&c_dfDIMouse);
+    keyboard->SetCooperativeLevel(wnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
+    mouse->SetCooperativeLevel(wnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
+
+    keyboard->Acquire();
+    mouse->Acquire();
+}
+void InputCore::Shutdown() {
+    mouse->Unacquire();
+    keyboard->Unacquire();
+    mouse->Release();
+    keyboard->Release();
+    device->Release();
+}
+
+void InputCore::ReadKeyboard(char *buffer, int size) {
+    keyboard->GetDeviceState(size, buffer);
+}
+void InputCore::ReadMouse(void *buffer, int size) {
+    mouse->GetDeviceState(size, buffer);
 }

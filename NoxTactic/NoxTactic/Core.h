@@ -8,6 +8,7 @@
 extern EngineCore* core;
 class Battle;
 class Graphics;
+//class Input;
 class Game: public EngineCore
 {
     ContainerDefs::StringContainer  Strings;
@@ -21,85 +22,95 @@ class Game: public EngineCore
     ContainerDefs::WallContainer    Walls;
     ContainerDefs::TileContainer    Tiles;
     Battle *battle;
+
     int Selection_Texture;
     int MoveArrows_Texture[Counters::directions];
 public:
     Graphics* Graphic();
+    //::Input*    Input();
     Game(EngineCore core);
 
-    const Enchant* DefEnchant(enumEnchants id) const { return Enchants[id]; }
-    const std::string String(enumStrings id) const { return Strings[id]; }
+    const Enchant*       DefEnchant(enumEnchants id) const { return Enchants[id]; }
+    const std::string    String(enumStrings id) const { return Strings[id]; }
     const DefaultEntity* DefEntity(enumEntities id) const { return Entities[id]; }
-    const Wall* DefWall(enumWalls id) const { return Walls[id]; }
-    const Tile* DefTile(enumTiles id) const { return Tiles[id]; }
-    const Map* DefMap(int id) const { return Maps[id]; }
-    const Weapon* DefWeapon(enumWeapons id) const { return Weapons[id]; }
-    const Action* DefAction(enumActions id) const { return Actions[id]; }
-    const Gesture* DefGesture(enumGestures id) const { return Gestures[id]; }
-    const Sound* DefSound(enumSounds id) const { return Sounds[id]; }
+    const Wall*          DefWall(enumWalls id) const { return Walls[id]; }
+    const Tile*          DefTile(enumTiles id) const { return Tiles[id]; }
+    const Map*           DefMap(int id) const { return Maps[id]; }
+    const Weapon*        DefWeapon(enumWeapons id) const { return Weapons[id]; }
+    const Action*        DefAction(enumActions id) const { return Actions[id]; }
+    const Gesture*       DefGesture(enumGestures id) const { return Gestures[id]; }
+    const Sound*         DefSound(enumSounds id) const { return Sounds[id]; }
 
     virtual void Init();
     virtual void Shutdown();
-    virtual void Frame(){}
+    virtual void Frame();
     virtual ~Game(){}
 
     void StartBattle(Battle* battle);
-    void EndBattle() {}
+    void EndBattle();
+
+    void CellClick(const vInt& coor, const long flags);
+    void KeyClick(const Keys key);
+    void ButtonClick(const Buttons button);
+    void CheckInput();
+
+    void RefreshScreen();
 
     int MoveArrow_Texture (Direction dir);
     int SelectionFrame_Texture ();
-
     void InitActionTextures(Action* action);
     void InitEntTextures(DefaultEntity* defent);
 };
 
-struct Picture 
-{
-    vInt coor;
-    int texture;
-    Picture(const vInt& coor, const int texture): coor(coor), texture(texture){}
-    Picture(): coor(0,0), texture(0){}
-};
-struct Button: public Picture
-{
-    Buttons ID;
-    Button(Picture pic, Buttons ID): Picture(pic), ID(ID) {}
-    Button(): Picture(), ID(NO_BUTTON) {}
-};
-struct Label 
-{
-    vInt coor;
-    std::string text;
-    Label(const vInt& coor, const std::string& text): coor(coor), text(text){}
-    Label(): coor(0,0), text(){}
-};
-struct SpellIcon
-{
-    int texture, active_texture;
-};
-struct SpellBar
-{
-    Picture bar;
-    vector<SpellIcon> icons;
-    static const int icons_startposx = 10;
-    static const int icons_startposy = 10;
-    static const int indent = 10;
-    int active_index;
-    vInt GetIconCoor(int num) const {
-        return bar.coor + vInt(icons_startposx, icons_startposy) + vInt(indent * (num-1), 0);
-    }
-    int GetIconTexture(int num) const {
-        if (num == active_index) {
-            return icons[num].active_texture;
-        } else {
-            return icons[num].texture;
-        }
-    }
-    SpellBar(Picture pic = Picture()): 
-        bar(pic), icons(vector<SpellIcon>(actions_per_set)), active_index(-1) {}
-};
 class Graphics: public GraphicCore
 {
+public:
+    struct Picture 
+    {
+        vInt coor;
+        int texture;
+        Picture(const vInt& coor, const int texture): coor(coor), texture(texture){}
+        Picture(): coor(0,0), texture(0){}
+    };
+    struct Button: public Picture
+    {
+        Buttons ID;
+        Button(Picture pic, Buttons ID): Picture(pic), ID(ID) {}
+        Button(): Picture(), ID(NO_BUTTON) {}
+    };
+    struct Label 
+    {
+        vInt coor;
+        std::string text;
+        Label(const vInt& coor, const std::string& text): coor(coor), text(text){}
+        Label(): coor(0,0), text(){}
+    };
+    struct SpellIcon
+    {
+        int texture, active_texture;
+    };
+    struct SpellBar
+    {
+        Picture bar;
+        vector<SpellIcon> icons;
+        static const int icons_startposx = 10;
+        static const int icons_startposy = 10;
+        static const int indent = 10;
+        int active_index;
+        vInt GetIconCoor(int num) const {
+            return bar.coor + vInt(icons_startposx, icons_startposy) + vInt(indent * (num-1), 0);
+        }
+        int GetIconTexture(int num) const {
+            if (num == active_index) {
+                return icons[num].active_texture;
+            } else {
+                return icons[num].texture;
+            }
+        }
+        SpellBar(Picture pic = Picture()): 
+            bar(pic), icons(vector<SpellIcon>(actions_per_set)), active_index(-1) {}
+    };
+private:
     std::vector<std::vector<std::vector<int>>> map;
     vInt size;
     vector<Picture> pics;
@@ -122,6 +133,62 @@ public:
     void Paint(const vInt& coor1, const vInt& coor2);
 };
 
+/*
+struct InputReturnMouse
+{
+    long flags;
+    vInt coor;
+    InputReturnMouse(const vInt& coor, long flags): flags(flags), coor(coor) {}
+};
+struct InputReturnButton
+{
+    Buttons ID;
+    InputReturnButton(Buttons ID): ID(ID) {}
+};
+struct InputReturnKey
+{
+    Keys ID;
+    InputReturnKey(Keys ID): ID(ID) {}
+};
+
+class Input: public InputCore
+{
+public:
+    struct FieldInfo
+    {
+        vLng startpos, endpos;
+        vLng cellsize, windowsize;
+        long cell_indent;
+        FieldInfo(vLng startpos, vLng endpos, vLng cellsize, vLng windowsize, long cell_indent):
+            startpos(startpos), endpos(endpos), cellsize(cellsize), windowsize(windowsize), 
+            cell_indent(cell_indent){}
+        FieldInfo(): startpos(0,0), endpos(0,0), cellsize(0,0), windowsize(0,0), cell_indent(0){}
+    } field;
+    struct ButtonField
+    {
+        vLng startpos, endpos;
+        Buttons ID;
+        ButtonField(const vLng& startpos, const vLng& endpos, Buttons ID):
+            startpos(startpos), endpos(endpos), ID(ID) {}
+        ButtonField(): startpos(0,0), endpos(0,0), ID(NO_BUTTON) {}
+    };
+private:
+    vector<ButtonField> buttons;
+    Keys keybinds[KEYS];
+    vLng cursor_coor;
+    char keyboard_state[KEYS];
+    int mouseflags; //the pressed keys part of mouse flags;
+public:
+    Input(FieldInfo field = FieldInfo());
+    void AddButton(ButtonField button);
+    void SetKeybindings(Keys keybinds[KEYS]);
+    void SetFieldInfo(const FieldInfo& field) { this->field = field; }
+
+    InputReturnMouse    CheckMouse();
+    InputReturnKey      CheckKeyboard();
+    InputReturnButton   CheckButtons();
+};
+*/
 class Battle 
 {
     Game* game;
@@ -180,7 +247,7 @@ public:
     //return true, if further automatic move is impossible
     bool ApplyEnvironmentEffects(Entity* ent);
 
-    void CellClick(const vInt& coor, const MouseFlags flags);
+    void CellClick(const vInt& coor, const long flags);
     void KeyClick(const Keys Key);
     void ButtonClick(const Buttons Button);
     void ChooseSpell(const int id);
@@ -248,7 +315,7 @@ protected:
 	int range, damage1, damage2, time_value, time_to_perform;
 	Sound* sound;
     enumStrings name, msg_performed, msg_started, msg_stopped, msg_affected, msg_killed;
-    int flags;
+    long flags;
     int icon_texture_id;
     int active_icon_texture_id;
     void (*action)(Entity*, const vInt&, const Action*); //func to be called 
@@ -256,11 +323,11 @@ public:
     Action(void (*action)(Entity*, const vInt&, const Action*), 
             int range, int damage1, int damage2, int timevalue, int performtime,
             Sound* sound, enumStrings name, enumStrings msg_done, enumStrings msg_started, 
-            enumStrings msg_stopped, enumStrings msg_affected, enumStrings msg_killed, int flags);
+            enumStrings msg_stopped, enumStrings msg_affected, enumStrings msg_killed, long flags);
 	virtual bool Perform(Entity* actor, const vInt& target, const Grid& grid) const;
     virtual bool CheckForValidity(Entity* actor, const vInt& target, const Grid& grid) const;
     int Range() const {return range;}
-    bool Flag(const ActionFlags flag) const { return ((flags & flag) == 1); }
+    bool Flag(const long flag) const { return ((flags & flag) == 1); }
     bool IsLengthy() const { return time_to_perform != 0; }
     int TimeToPerform() const { return time_to_perform; }
     int MyIcon() const { return icon_texture_id; }

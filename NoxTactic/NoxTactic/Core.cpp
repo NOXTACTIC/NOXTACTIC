@@ -10,13 +10,64 @@
 extern EngineCore *core;
 using namespace ContainerDefs;
 using namespace std;
+void DefaultKeyBindings(Keys *keybinds) {
+    keybinds[DIK_A] = KEY_SPELL1;
+    keybinds[DIK_S] = KEY_SPELL2;
+    keybinds[DIK_D] = KEY_SPELL3;
+    keybinds[DIK_F] = KEY_SPELL4;
+    keybinds[DIK_G] = KEY_SPELL5;
+    keybinds[DIK_LEFT]  = KEY_ARROW_LEFT;
+    keybinds[DIK_RIGHT] = KEY_ARROW_RIGHT;
+    keybinds[DIK_UP]    = KEY_ARROW_UP;
+    keybinds[DIK_DOWN]  = KEY_ARROW_DOWN;
+    keybinds[DIK_RETURN] = KEY_ACCEPT;
+    keybinds[DIK_ESCAPE] = KEY_ESC;
+}
+
+void MainLoop(Game* game) {
+    MSG msg;
+    BOOL bRet;
+
+    while( (bRet = GetMessage( &msg, NULL, 0, 0 )) != 0)
+    { 
+        if (bRet == -1)
+        {
+            // handle the error and possibly exit
+        }
+        else
+        {
+            TranslateMessage(&msg); 
+            DispatchMessage(&msg); 
+        }
+        switch(msg.message) {
+        case WM_CLOSE:
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        case WM_PAINT:
+            game->Frame();
+        };
+    }
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nShow){
     core = new Game(EngineCore(hInstance, "NoxTactic", "NoxTactic", 800, 600, 100, 100));
     
     Game* game = dynamic_cast<Game*>(core);
     core->SetGraphicCore(new Graphics(game));
+    game->Graphic()->Init();
     core->Init();
+
+    Keys keybindings[KEYS];
+    DefaultKeyBindings(keybindings);
+
     game->StartBattle(new Battle(game->DefMap(0), game));
+    //entering main loop
+    MainLoop(game);
+
+    game->Shutdown();
+    delete core;
+    PostQuitMessage(0);
 }
 
 int round(double val) {
@@ -50,14 +101,22 @@ void Game::InitActionTextures(Action* action) {
     action->SetIcon(Graphic()->AddTexture_A(AppPath() + Paths::ActionsIcons + String(action->Name()) + common_extension));
     action->SetActiveIcon(Graphic()->AddTexture_A(AppPath() + Paths::ActionsActiveIcons + String(action->Name()) + common_extension));
 }
+void Game::RefreshScreen() {
+    battle->RefreshScreen();
+}
 
 void Game::StartBattle(Battle* battle) {
     this->battle = battle;
     Graphic()->SetMapSize(battle->grid.size());
     battle->RefreshScreen();
 }
+void Game::EndBattle() {
+    
+    delete battle;
+}
 
 Graphics* Game::Graphic() { return static_cast<Graphics*>(graphic); }
+//::Input*    Game::Input() {return static_cast<::Input*>(input); }
 
 void Graphics::SetMapSize(const vInt& size) { 
     SetMapSize(size.x, size.y); 
@@ -73,7 +132,7 @@ void Graphics::PushTexture(const vInt& coor, int texture) {
     map[coor.x][coor.y].push_back(texture);
 }
 void Graphics::ClearCell(const vInt& coor) {
-    map[coor.x][coor.y].clear();
+    map[coor.x-1][coor.y-1].clear();
 }
 
 void Graphics::AddPicture(Picture pic) { 
@@ -90,25 +149,112 @@ void Graphics::SetSpellbar(SpellBar bar) {
 }
 
 void Graphics::Paint(const vInt& coor1, const vInt& coor2) {
+    ClearDisplay();
     BeginSprite();
-    for (int x = coor1.x; x < min(size.x, coor2.x); ++x) {
-        for (int y = coor2.x; y < min(size.y, coor2.y); ++y) {
+    for (int x = coor1.x - 1; x < min(size.x, coor2.x) - 1; ++x) {
+        for (int y = coor1.y - 1; y < min(size.y, coor2.y) - 1; ++y) {
             for (unsigned int i = 0; i < map[x][y].size(); ++i) {
-                vInt tmp = (vInt(x, y) - coor1) * picsize;
-                PaintSprite(map[x][y][i], D3DXVECTOR2(tmp.x, tmp.y), D3DXVECTOR2(1.0, 1.0));
+                vInt tmp = (vInt(x+1, y+1) - coor1) * picsize;
+                PaintSprite(map[x][y][i], D3DXVECTOR2(tmp.x, tmp.y));
             }
         }
     }
     EndSprite();
 }
+/*
+Input::Input(FieldInfo field): field(field), buttons() {}
+void Input::AddButton(ButtonField button) {
+    buttons.push_back(button);
+}
 
+void Input::SetKeybindings(Keys keybinds[KEYS]) {
+    for (int i = 0; i < KEYS; ++i) {
+        this->keybinds[i] = keybinds[i];
+    }
+}
+
+InputReturnMouse Input::CheckMouse(){
+    DIMOUSESTATE MouseState;
+    ReadMouse((void*)&MouseState);
+
+    cursor_coor.x += MouseState.lX;
+    cursor_coor.y += MouseState.lY;
+    
+    if (IsKeyPressed(MouseState.rgbButtons, 0)) {
+        mouseflags = mouseflags | CLICK_LEFT;
+    } else {
+        mouseflags = mouseflags & (!CLICK_LEFT);
+    }
+    if (IsKeyPressed(MouseState.rgbButtons, 1)) {
+        mouseflags = mouseflags | CLICK_RIGHT;
+    } else {
+        mouseflags = mouseflags & (!CLICK_RIGHT);
+    }
+    if (!(mouseflags & (CLICK_RIGHT | CLICK_LEFT))) {
+        return InputReturnMouse(vInt(0,0), mouseflags);
+    }
+
+    vLng cell_coor = (cursor_coor - field.startpos) / (field.cellsize + vLng(1,1)*field.cell_indent);
+    if (cell_coor.IsInside(vLng(1,1), field.windowsize)) {
+        return InputReturnMouse(vInt(static_cast<int>(cell_coor.x), static_cast<int>(cell_coor.y)), mouseflags);
+    } else {
+        return InputReturnMouse(vInt(0,0), mouseflags);
+    }
+}
+InputReturnKey Input::CheckKeyboard(){
+    ReadKeyboard(keyboard_state);
+    if (IsKeyPressed(keyboard_state, DIK_LSHIFT) ||
+        IsKeyPressed(keyboard_state, DIK_RSHIFT)) {
+            mouseflags = mouseflags | CLICK_SHIFT;
+    } else {
+        mouseflags = mouseflags & (!CLICK_SHIFT);
+    }
+    if (IsKeyPressed(keyboard_state, DIK_LMENU) ||
+        IsKeyPressed(keyboard_state, DIK_RMENU)) {
+            mouseflags = mouseflags | CLICK_ALT;
+    } else {
+        mouseflags = mouseflags & (!CLICK_ALT);
+    }
+    if (IsKeyPressed(keyboard_state, DIK_LCONTROL) ||
+        IsKeyPressed(keyboard_state, DIK_RCONTROL)) {
+            mouseflags = mouseflags | CLICK_CTRL;
+    } else {
+        mouseflags = mouseflags & (!CLICK_CTRL);
+    }
+
+    for (int i = 0; i < KEYS; ++i) {
+        if (IsKeyPressed(keyboard_state, i)) {
+            return InputReturnKey(keybinds[i]);
+        }
+    }
+    return InputReturnKey(KEY_NONE);
+}
+InputReturnButton Input::CheckButtons() {
+    DIMOUSESTATE MouseState;
+    ReadMouse((void*)&MouseState);
+    
+    cursor_coor.x += MouseState.lX;
+    cursor_coor.y += MouseState.lY;
+    if (IsKeyPressed(MouseState.rgbButtons, 0)) {
+        for (auto it = buttons.begin(); it != buttons.end(); ++it) {
+            if (cursor_coor.IsInside((*it).startpos, (*it).endpos)) {
+                return InputReturnButton((*it).ID);
+            }
+        }
+    }
+    return InputReturnButton(NO_BUTTON);
+}
+*/
 #undef PlaySound
 Game::Game(EngineCore engine): EngineCore(engine) {}
-void Game::Shutdown(){
-    delete graphic;
+template <class Container>
+void FreeContainer(Container& container) {
+   for (Container::iterator it = container.begin(); it != container.end(); ++it) {
+       delete (*it);
+   }
 }
+
 void Game::Init(){
-    graphic = new Graphics(this);
     Selection_Texture = Graphic()->AddTexture(AppPath() + Paths::SelectionFrame);
     for (char i = 0; i < Counters::directions; ++i) {
         MoveArrows_Texture[i] = Graphic()->AddTexture(AppPath() + Paths::MoveArrow + int_to_string(i + 1) + common_extension);
@@ -138,15 +284,61 @@ void Game::Init(){
         InitActionTextures(Actions[i]);
     }
 }
-int Game::MoveArrow_Texture (Direction dir) {
+void Game::Shutdown(){
+    Graphic()->Shutdown();
+    delete graphic;
+    input->Shutdown();
+    delete input;
+    FreeContainer(Sounds);
+    FreeContainer(Gestures);
+    FreeContainer(Enchants);
+    FreeContainer(Actions);
+    FreeContainer(Weapons);
+    FreeContainer(Maps);
+    FreeContainer(Walls);
+    FreeContainer(Tiles);
+}
+void Game::Frame() {
+    CheckInput();
+    RefreshScreen();
+}
+
+int  Game::MoveArrow_Texture (Direction dir) {
     if (dir == NO_DIRECTION) { 
         return 0;
     } else {
         return MoveArrows_Texture[static_cast<int>(dir) - 1];
     }
 }
-int Game::SelectionFrame_Texture () {
+int  Game::SelectionFrame_Texture () {
     return Selection_Texture;
+}
+
+void Game::CellClick(const vInt& coor, const long flags) {
+    if (battle) { battle->CellClick(coor, flags); }
+}
+void Game::KeyClick(const Keys key) {
+    if (battle) { battle->KeyClick(key); }
+}
+void Game::ButtonClick(const Buttons button) {
+    if (battle) { battle->ButtonClick(button); }
+}
+void Game::CheckInput() {
+
+    /*::Input* input = this->Input();
+    auto checkkeyboard = input->CheckKeyboard();
+    if (checkkeyboard.ID != KEY_NONE) {
+        KeyClick(checkkeyboard.ID);
+    }
+    auto checkbuttons = input->CheckButtons();
+    if (checkbuttons.ID != NO_BUTTON) {
+        ButtonClick(checkbuttons.ID);
+    }
+    
+    auto checkmouse = input->CheckMouse();
+    if (checkmouse.flags & CLICK_LEFT) {
+        CellClick(checkmouse.coor, checkmouse.flags);
+    }*/
 }
 
 Map::~Map() {
@@ -183,10 +375,9 @@ void Loader::loadMaps(MapContainer& container, EntityContainer& entities, WallCo
         // ...
     }
 }*/
-
 Battle::Battle(const Map* map, Game* game): game(game), map(map), ent(), curplayer(TEAM_BLUE), 
     grid(map->size), players_count(map->players_count), CurMode(CURSORMODE_NO),
-    MapScreenPosition(vInt(0,0)), FieldWindowSize(field_window_size), CurSel(), 
+    MapScreenPosition(vInt(1,1)), FieldWindowSize(field_window_size), CurSel(), 
     Spellbar(), MoveTrace(), LongActions() { 
         for (auto it = map->entities.begin(); it != map->entities.end(); ++it) {
             ent.push_back(new Entity(**it));
@@ -204,7 +395,7 @@ Battle::Battle(const Map* map, Game* game): game(game), map(map), ent(), curplay
         }
 }
 
-void Battle::CellClick(const vInt& coor, const MouseFlags flags) {
+void Battle::CellClick(const vInt& coor, const long flags) {
     Unit* unit = dynamic_cast<Unit*>(CurSel.ent);
     switch(CurMode) {
     case CURSORMODE_SELECT:
@@ -721,7 +912,7 @@ void Battle::RenderMoveArrow(const TraceStep& step) {
 Action::Action(void (*action)(Entity*, const vInt&, const Action*),
     int range, int damage1, int damage2, int timevalue, int performtime,
     Sound* sound, enumStrings name, enumStrings msg_done, enumStrings msg_started, 
-    enumStrings msg_stopped, enumStrings msg_affected, enumStrings msg_killed, int flags):
+    enumStrings msg_stopped, enumStrings msg_affected, enumStrings msg_killed, long flags):
                action(action), range(range), damage1(damage1), damage2(damage2), time_value(timevalue),
                time_to_perform(performtime), sound(sound), name(name), msg_performed(msg_done),
                msg_started(msg_started), msg_stopped(msg_stopped), msg_affected(msg_affected),
